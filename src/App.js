@@ -5,34 +5,55 @@ class App extends Component {
     constructor(){
         super();
         this.state={
-            progress : 0,
-        }
-        this.fetchTaskList = this.fetchTaskList.bind(this);
+            progress : ()=> {
+                let count =0;
+                for ( var i of this.state.rawData){
+                    if (i.completed){
+                        count++;
+                    }
+                }
+                return count*100/ this.state.rawData.length;
+            },
+            fetchUrl :'http://127.0.0.1:8000/tasks',
+            rawData: [],
+        };
+    
     }
     componentDidMount(){
         this.fetchTaskList();
     }
     fetchTaskList() {
-        let count =0;
-        axios.get('http://127.0.0.1:8000/tasks')
+        axios.get(this.state.fetchUrl)
             .then(result => {
-                for ( var i of result.data){
-                    if (i.completed){
-                        count++;
-                    }
-                }
+            
                 this.setState({
                     rawData: result.data,
-                    progress: count*100/result.data.length,
                 });
                 console.log(this.state);
             })
+    }
+    handleRemove(url){
+
+        axios.delete(url);
+        const remainder = this.state.rawData.filter((todo) => {
+          if(todo.url !== url) return todo;
+        });
+        // Update state with filter
+        this.setState({rawData: remainder});
+    }
+    handleComplete(url){
+        const remainder = this.state.rawData.filter((task)=>{
+            if(task.url === url) return {...task, completed: !task.completed};
+            return task;
+        });
+        this.setState({rawData: remainder});
+
     }
     render() {
         return (
             <div className="container">
             <Progress progress = {this.state.progress} />
-            <TaskList data = {this.state.rawData} refetch = {this.fetchTaskList} />
+            <TaskList data = {this.state.rawData} remove = {this.handleRemove.bind(this)} complete={this.handleComplete.bind(this)} />
             </div>
 
         );
@@ -45,7 +66,7 @@ class Progress extends Component {
         return (
             <div>
             <div className="progress mb-4">
-                <div className="progress-bar bg-success" role="progressbar" style={{ width: this.props.progress + '%' }} aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                <div className="progress-bar bg-success" role="progressbar" style={{ width: this.props.progress() + '%' }} aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
             </div>
         );
@@ -53,12 +74,9 @@ class Progress extends Component {
 }
 
 class TaskList extends Component {
-    componentWillReceiveProps({data}) {
-      this.setState({...this.state,data})
-    }
     render() {
               if (this.props.data != null) 
-                var rend = this.props.data.map((d)=> <Task completed = {d.completed} d={d} refetch = {this.props.refetch} />) ;
+                var rend = this.props.data.map((d)=> <Task  d={d} remove = {this.props.remove} complete= {this.props.complete }/>) ;
         // const renderList=this.state.tasks.map((task)=> <li>{task.desc}</li>);
         return (
             <div className="list-group">
@@ -68,29 +86,15 @@ class TaskList extends Component {
     }
 }
 class Task extends Component{
-   componentWillReceiveProps({d}) {
-     this.setState({...this.state,d})
-   } 
-    renderDesc(){
-     return (this.props.completed)? (<strike>{this.props.d.desc} </strike>): this.props.d.desc;
-    }
-    deleteTask(url){
-        axios.delete(url).then(
-        this.props.refetch()
-        );
-    }
-    completeTask(url){
-        console.log(this.props.d, url);
-        axios.put(url, {...this.props.d,completed : !this.props.completed})
-    }
     render(){
+    var renderDesc = ()=> (this.props.d.completed)? (<strike>{this.props.d.desc} </strike>): this.props.d.desc;
         return (
-        <li className='list-group-item text-center' key='{this.props.d.title}'>
-            <button className='btn float-left btn-outline-success border-0' onClick= {()=> this.completeTask(this.props.d.url)}>
+        <li className='list-group-item text-center' key='{this.props.d.url}'>
+            <button className='btn float-left btn-outline-success border-0' onClick= {()=> this.props.complete(this.props.d.url)}>
                 <span aria-hidden='true' className="fa fa-check"></span>
             </button>
-            {this.renderDesc()}
-            <button className=' btn float-right btn-outline-danger border-0' onClick={()=>this.deleteTask(this.props.d.url)}>
+            {renderDesc()}
+            <button className=' btn float-right btn-outline-danger border-0' onClick={()=>this.props.remove(this.props.d.url)}>
                 <span aria-hidden="true" className='fa fa-times' ></span>
             </button>
         </li>
