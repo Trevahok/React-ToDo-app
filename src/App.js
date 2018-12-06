@@ -49,9 +49,6 @@ class App extends Component {
     render() {
         return (
             <div className="container">
-                <div className="row">
-                
-                </div>
                 <Progress data={this.state.data} />
                 <TaskList data={this.state.data} remove={this.deleteItem} complete={this.completeItem} />
             </div>
@@ -91,16 +88,12 @@ class TaskList extends Component {
 class Task extends Component {
     render() {
         var renderDesc = () => (this.props.d.completed) ? (<strike>{this.props.d.title} </strike>) : this.props.d.title;
-        let key = Date.now()
         return (
-            <li className='list-group-item text-center' data-toggle="collapse" data-target={"#collapsedata" + key} >
+            <li className='list-group-item text-center'>
                 <button className='btn float-left btn-outline-success border-0' onClick={() => this.props.complete(this.props.d.url)}>
                     <span aria-hidden='true' className="fa fa-check"></span>
                 </button>
                 {renderDesc()}
-                <div id={"collapse" + key} className="collapse">
-                {this.props.d.desc}
-                </div>
                 <button className=' btn float-right btn-outline-danger border-0' onClick={() => this.props.remove(this.props.d.url)}>
                     <span aria-hidden="true" className='fa fa-times' ></span>
                 </button>
