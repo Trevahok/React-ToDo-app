@@ -6,7 +6,7 @@ class App extends Component {
         super();
         this.state = {
             data: [],
-            fetchUrl: "https://todorest.herokuapp.com/tasks/",
+            fetchUrl: "http://35.225.13.220:8000/tasks/",
             loading: true,
         }
         this.deleteItem = this.deleteItem.bind(this);
